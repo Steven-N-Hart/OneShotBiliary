@@ -1,28 +1,20 @@
+import tensorflow as tf
 from preprocess import format_example
-from loss import lossless_triplet_loss
 
-in_dims = (N_MINS, n_feat)
-out_dims = N_FACTORS
+anchor_path = ''
+positive_path = ''
+negative_path = ''
 
-# Network definition
-with tf.device(tf_device):
+anchor,   aL = format_example(anchor_path,   label='anchor',   img_size=256)
+positive, pL = format_example(positive_path, label='positive', img_size=256)
+negative, nL = format_example(negative_path, label='negative', img_size=256)
 
-    # Create the 3 inputs
-    anchor_in = Input(shape=in_dims)
-    pos_in = Input(shape=in_dims)
-    neg_in = Input(shape=in_dims)
+image_vector = tf.concat(anchor, positive, negative)
+label_vector = tf.concat(aL, pL, nL)
 
-    # Share base network with the 3 inputs
-    base_network = create_base_network(in_dims, out_dims)
-    anchor_out = base_network(anchor_in)
-    pos_out = base_network(pos_in)
-    neg_out = base_network(neg_in)
-    merged_vector = concatenate([anchor_out, pos_out, neg_out], axis=-1)
 
-    # Define the trainable model
-    model = Model(inputs=[anchor_in, pos_in, neg_in], outputs=merged_vector)
-    model.compile(optimizer=Adam(),
-                  loss=lossless_triplet_loss)
+# Build the model
+model = get_model(image_vector, label_vector, num_classes=3, base_learning_rate=0.0001)
 
 # Training the model
 model.fit(train_data, y_hat, batch_size=256, epochs=10)
