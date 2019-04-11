@@ -1,20 +1,42 @@
 import tensorflow as tf
-from preprocess import format_example
 
-anchor_path = ''
-positive_path = ''
-negative_path = ''
+from model import build_network
+from preprocess import generate_inputs
 
-anchor,   aL = format_example(anchor_path,   label='anchor',   img_size=256)
-positive, pL = format_example(positive_path, label='positive', img_size=256)
-negative, nL = format_example(negative_path, label='negative', img_size=256)
-
-image_vector = tf.concat(anchor, positive, negative)
-label_vector = tf.concat(aL, pL, nL)
-
+class_paths = ['/Users/m087494/Desktop/Example_Images/MELF/',
+               '/Users/m087494/Desktop/Example_Images/Cytology/']
+num_epochs = 5
+log_dir = "/Users/m087494/Desktop/tb"
 
 # Build the model
-model = get_model(image_vector, label_vector, num_classes=3, base_learning_rate=0.0001)
+model = build_network()
+
+# tf.keras.utils.plot_model(
+#    model,
+#    to_file='/Users/m087494/Desktop/model.png',
+#    show_shapes=True)
+# model.summary()
+
+# Write tensorboard callback function
+tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
+                                            histogram_freq=50,
+                                            write_graph=True,
+                                            write_grads=True,
+                                            write_images=True)
+
+
 
 # Training the model
-model.fit(train_data, y_hat, batch_size=256, epochs=10)
+model.fit_generator(generate_inputs(class_paths, img_size=256),
+                    steps_per_epoch=1,
+                    epochs=num_epochs,
+                    callbacks=[tbCallback],
+                    validation_data=None,
+                    validation_steps=None,
+                    class_weight=None,
+                    max_queue_size=10,
+                    workers=1,
+                    use_multiprocessing=False,
+                    shuffle=True,
+                    initial_epoch=0
+                    )
