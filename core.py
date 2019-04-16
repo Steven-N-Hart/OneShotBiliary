@@ -31,16 +31,17 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
 
 
 # Training the model
-model.fit_generator(generate_inputs(class_paths, img_size=256),
-                    steps_per_epoch=steps_per_epoch,
-                    epochs=num_epochs,
-                    callbacks=[tbCallback],
-                    validation_data=None,
-                    validation_steps=None,
-                    class_weight=None,
-                    max_queue_size=10,
-                    workers=1,
-                    use_multiprocessing=False,
-                    shuffle=True,
-                    initial_epoch=0
-                    )
+for i in items:
+    model.fit_generator(i,
+                        steps_per_epoch=steps_per_epoch,
+                        epochs=num_epochs,
+                        callbacks=[tbCallback],
+                        validation_data=None,
+                        validation_steps=None,
+                        class_weight=None,
+                        max_queue_size=10,
+                        workers=1,
+                        use_multiprocessing=False,
+                        shuffle=True,
+                        initial_epoch=0
+                        )
