@@ -29,21 +29,18 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
                                             write_images=True)
 
 
-
 # Training the model
-items = generate_inputs(class_paths, img_size=256)
-for i in items:
-    model.fit_generator(i,
-                        steps_per_epoch=steps_per_epoch,
-                        epochs=num_epochs,
-                        batch_size=batch_size,
-                        callbacks=[tbCallback],
-                        validation_data=None,
-                        validation_steps=None,
-                        class_weight=None,
-                        max_queue_size=10,
-                        workers=1,
-                        use_multiprocessing=False,
-                        shuffle=True,
-                        initial_epoch=0
-                        )
+def _sample_images():
+    items = generate_inputs(class_paths, img_size=256)
+    yield items
+
+
+ds = tf.data.Dataset.from_generator(_sample_images(),
+                                    (tf.float32, tf.float32))
+
+model.fit(ds,
+          batch_size=batch_size,
+          num_epochs=num_epochs,
+          verbose=1,
+          shuffle=True)
+

@@ -37,27 +37,26 @@ def generate_inputs(class_paths, img_size=256):
     """
 
     num_classes = class_paths.__len__()
-    # Sample Indefinitely
-    while 1:
-        anchor_class = sample(range(num_classes), 1)[0]
 
-        # select an example from another class
-        other_class = anchor_class
-        while other_class == anchor_class:
-            other_class = sample(range(num_classes), 1)[0]
+    anchor_class = sample(range(num_classes), 1)[0]
 
-        # Get a filename from each class path
-        anchor_in = choice(os.listdir(class_paths[anchor_class]))
-        pos_in = anchor_in
-        # Make sure you don't have the same image
-        while anchor_in == pos_in:
-            pos_in = choice(os.listdir(class_paths[anchor_class]))
+    # select an example from another class
+    other_class = anchor_class
+    while other_class == anchor_class:
+        other_class = sample(range(num_classes), 1)[0]
 
-        neg_in = choice(os.listdir(class_paths[other_class]))
-        # Now read in the images
-        anchor_in = format_example(image_path=class_paths[anchor_class], image_name=anchor_in, img_size=img_size)
-        pos_in = format_example(image_path=class_paths[anchor_class], image_name=pos_in, img_size=img_size)
-        neg_in = format_example(image_path=class_paths[other_class], image_name=neg_in, img_size=img_size)
+    # Get a filename from each class path
+    anchor_in = choice(os.listdir(class_paths[anchor_class]))
+    pos_in = anchor_in
+    # Make sure you don't have the same image
+    while anchor_in == pos_in:
+        pos_in = choice(os.listdir(class_paths[anchor_class]))
 
-        out = [anchor_class, anchor_class, other_class]
-        yield ([anchor_in, pos_in, neg_in], out)
+    neg_in = choice(os.listdir(class_paths[other_class]))
+    # Now read in the images
+    anchor_in = format_example(image_path=class_paths[anchor_class], image_name=anchor_in, img_size=img_size)
+    pos_in = format_example(image_path=class_paths[anchor_class], image_name=pos_in, img_size=img_size)
+    neg_in = format_example(image_path=class_paths[other_class], image_name=neg_in, img_size=img_size)
+
+    out = [anchor_class, anchor_class, other_class]
+    yield ([anchor_in, pos_in, neg_in], out)
