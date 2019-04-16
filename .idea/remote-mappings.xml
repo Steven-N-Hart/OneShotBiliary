@@ -4,6 +4,13 @@
     <list>
       <list>
         <remote-mappings server-id="python@2ae131fa-58bd-4c8c-8c02-b579c1a62560" />
+        <remote-mappings server-id="python@sftp://m087494@rcfgpu02:22/projects/shart/anaconda3/envs/venv/bin/python">
+          <settings>
+            <list>
+              <mapping local-root="$PROJECT_DIR$" remote-root="/people/m087494/OneShotBiliary" />
+            </list>
+          </settings>
+        </remote-mappings>
       </list>
     </list>
   </component>

@@ -1,12 +1,16 @@
 import tensorflow as tf
 
 from model import build_network
-from preprocess import generate_inputs
+from preprocess import generate_inputs, get_epoch_size
 
-class_paths = ['/Users/m087494/Desktop/Example_Images/MELF/',
-               '/Users/m087494/Desktop/Example_Images/Cytology/']
+class_paths = ['/people/m087494/OneShotBiliary/data/positive',
+               '/people/m087494/OneShotBiliary/data/negative']
+log_dir = "/people/m087494/OneShotBiliary/logs"
+
 num_epochs = 5
-log_dir = "/Users/m087494/Desktop/tb"
+
+
+steps_per_epoch = get_epoch_size(class_paths)
 
 # Build the model
 model = build_network()
@@ -28,7 +32,7 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
 
 # Training the model
 model.fit_generator(generate_inputs(class_paths, img_size=256),
-                    steps_per_epoch=100,
+                    steps_per_epoch=steps_per_epoch,
                     epochs=num_epochs,
                     callbacks=[tbCallback],
                     validation_data=None,
