@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from model import build_network
-from preprocess import generate_inputs
+from preprocess import generate_inputs, get_epoch_size
 
 class_paths = ['/people/m087494/OneShotBiliary/data/positive',
                '/people/m087494/OneShotBiliary/data/negative']
