@@ -28,7 +28,7 @@ def build_embedding(shape, dimensions):
 
     # 1 Final Conv to get into 128 dim embedding
     x = Conv2D(dimensions, kernel_size=2, padding='same')(x)
-    x = GlobalMaxPooling2D()(x)
+    #x = GlobalMaxPooling2D()(x)
 
     out = x
     return Model(inputs=inp, outputs=out)

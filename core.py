@@ -8,7 +8,7 @@ class_paths = ['/people/m087494/OneShotBiliary/data/positive',
 log_dir = "/people/m087494/OneShotBiliary/logs"
 
 num_epochs = 5
-
+num_examples = get_epoch_size(class_paths)
 
 # Build the model
 model = build_network()
@@ -30,7 +30,7 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
 
 # Training the model
 model.fit_generator(generate_inputs(class_paths, img_size=256),
-                    steps_per_epoch=100,
+                    steps_per_epoch=num_examples,
                     epochs=num_epochs,
                     callbacks=[tbCallback],
                     validation_data=None,
