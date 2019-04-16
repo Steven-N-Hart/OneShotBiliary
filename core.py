@@ -31,6 +31,7 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
 
 
 # Training the model
+items = generate_inputs(class_paths, img_size=256)
 for i in items:
     model.fit_generator(i,
                         steps_per_epoch=steps_per_epoch,
