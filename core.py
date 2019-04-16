@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
 
 from model import build_network
@@ -23,7 +24,7 @@ model = build_network()
 tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
                                             histogram_freq=50,
                                             write_graph=True,
-                                            write_grads=True,
+                                            write_grads=False,
                                             write_images=True)
 
 
@@ -37,8 +38,11 @@ model.fit_generator(generate_inputs(class_paths, img_size=256),
                     validation_steps=None,
                     class_weight=None,
                     max_queue_size=10,
-                    workers=1,
+                    workers=3,
                     use_multiprocessing=False,
                     shuffle=True,
                     initial_epoch=0
                     )
+
+
+model.save('model.h5')
