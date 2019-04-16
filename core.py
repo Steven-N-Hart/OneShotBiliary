@@ -39,7 +39,7 @@ model.fit_generator(generate_inputs(class_paths, img_size=256),
                     class_weight=None,
                     max_queue_size=10,
                     workers=3,
-                    use_multiprocessing=False,
+                    use_multiprocessing=True,
                     shuffle=True,
                     initial_epoch=0
                     )
