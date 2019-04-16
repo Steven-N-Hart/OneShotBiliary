@@ -27,13 +27,17 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=log_dir,
                                             write_grads=False,
                                             write_images=True)
 
-
+cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath='mymodel_{epoch}.h5',
+                                                save_best_only=True,
+                                                verbose=1,
+                                                monitor='mae'
+)
 
 # Training the model
 model.fit_generator(generate_inputs(class_paths, img_size=256),
                     steps_per_epoch=num_examples,
                     epochs=num_epochs,
-                    callbacks=[tbCallback],
+                    callbacks=[tbCallback, cpCallback],
                     validation_data=None,
                     validation_steps=None,
                     class_weight=None,
@@ -43,6 +47,3 @@ model.fit_generator(generate_inputs(class_paths, img_size=256),
                     shuffle=True,
                     initial_epoch=0
                     )
-
-
-model.save('model.h5')
