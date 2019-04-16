@@ -6,11 +6,11 @@ from preprocess import generate_inputs, get_epoch_size
 class_paths = ['/people/m087494/OneShotBiliary/data/positive',
                '/people/m087494/OneShotBiliary/data/negative']
 log_dir = "/people/m087494/OneShotBiliary/logs"
-
+batch_size = 20
 num_epochs = 5
 
 
-steps_per_epoch = get_epoch_size(class_paths)
+steps_per_epoch = get_epoch_size(class_paths) / batch_size
 
 # Build the model
 model = build_network()
@@ -36,6 +36,7 @@ for i in items:
     model.fit_generator(i,
                         steps_per_epoch=steps_per_epoch,
                         epochs=num_epochs,
+                        batch_size=batch_size,
                         callbacks=[tbCallback],
                         validation_data=None,
                         validation_steps=None,
