@@ -7,10 +7,9 @@ import tensorflow as tf
 def format_example(image_path=None, image_name=None, img_size=256):
     """
     Apply any image preprocessing here
-    invoke as `train = imagelist.map(format_example)`
-    :param image_path:
-    :param image_name:
-    :param img_size:
+    :param image_path: file path of image that contains all the images
+    :param image_name: the specific filename of the image
+    :param img_size: size that images should be reshaped to
     :return:
     """
     image = tf.io.read_file(os.path.join(image_path, image_name))
@@ -22,16 +21,23 @@ def format_example(image_path=None, image_name=None, img_size=256):
     return image
 
 
-def get_epoch_size(class_paths):
+def get_epoch_size(base_directory, class_paths):
+    """
+    Given an array of directories, count the number of events in each one
+    :param base_directory: root directory of images
+    :param class_paths: list of directories that contain images
+    :return: number of images
+    """
     val = 0
     for i in class_paths:
-        val += os.listdir(i).__len__()
+        _target_dir = os.path.join(base_directory, i)
+        val += os.listdir(_target_dir).__len__()
     return val
 
 def generate_inputs(class_paths, img_size=256):
     """
     Randomly return inputs ready for classification
-    :param class_paths: A list of file paths where each subfolder contains pngs of that class
+    :param class_paths: A list of file paths where each subfolder contains images of that class
     :param img_size: an integer to use for h & w of image
     :return: dict of inputs, targets
     """
