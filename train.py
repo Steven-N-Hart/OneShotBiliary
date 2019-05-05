@@ -1,14 +1,18 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import argparse
+import glob
+import logging
+import os
+
 import tensorflow as tf
 
 from model import build_network
 from preprocess import generate_inputs, get_epoch_size
 
-import argparse
-
-class_paths = ['/people/m087494/OneShotBiliary/data/positive',
-               '/people/m087494/OneShotBiliary/data/negative']
-log_dir = "/people/m087494/OneShotBiliary/logs"
+class_paths = glob.glob("train/*")
+val_class_paths = glob.glob("val/*")
+log_dir = "logs/"
 
 num_epochs = 5
 
@@ -44,7 +48,7 @@ parser.add_argument("-e", "--num_epocs",
                     help="Number of epochs to use for training",
                     default=10, type=int)
 
-parser.add_argument("-v", "--verbose",
+parser.add_argument("-V", "--verbose",
                     dest="logLevel",
                     choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                     default="INFO",
@@ -76,18 +80,18 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
                                             write_images=True)
 
 # Training the model
-model.fit_generator(generate_inputs(class_paths, img_size=256),
+model.fit_generator(generate_inputs(base_directory, img_size=256),
                     steps_per_epoch=num_examples,
                     epochs=args.num_epochs,
                     callbacks=[tbCallback],
-                    validation_data=args.image_dir_validation,
-                    validation_steps=None,
+                    validation_data=generate_inputs(val_class_paths, img_size=256),
+                    validation_steps=10,
                     class_weight=None,
                     max_queue_size=10,
-                    workers=4,
-                    use_multiprocessing=True,
+                    workers=1,
+                    use_multiprocessing=False,
                     shuffle=True,
                     initial_epoch=0
                     )
 
-model.save(model_out)
+model.save(args.model_out)

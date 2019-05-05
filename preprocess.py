@@ -1,3 +1,4 @@
+import logging
 import os
 from random import sample, choice
 
@@ -12,12 +13,14 @@ def format_example(image_path=None, image_name=None, img_size=256):
     :param img_size: size that images should be reshaped to
     :return:
     """
+    logging.debug('image_path: {}\timage_name:{}'.format(image_path, image_name))
     image = tf.io.read_file(os.path.join(image_path, image_name))
     image = tf.io.decode_jpeg(image)
     image = tf.cast(image, tf.float32)
-    image = (image / 255.0)
+    image = tf.image.per_image_standardization(image)
     image = tf.image.resize(image, (img_size, img_size))
     image = tf.reshape(image, (1, img_size, img_size, 3))
+    logging.debug('Image:{}'.format(image))
     return image
 
 
@@ -41,29 +44,42 @@ def generate_inputs(class_paths, img_size=256):
     :param img_size: an integer to use for h & w of image
     :return: dict of inputs, targets
     """
+    logging.debug('class_paths: {}'.format(class_paths))
 
-    num_classes = class_paths.__len__()
+    classes = os.listdir(class_paths)
+    num_classes = classes.__len__()
 
     while 1:
         anchor_class = sample(range(num_classes), 1)[0]
-
+        logging.debug('anchor_class: {}'.format(anchor_class))
         # select an example from another class
         other_class = anchor_class
         while other_class == anchor_class:
             other_class = sample(range(num_classes), 1)[0]
 
         # Get a filename from each class path
-        anchor_in = choice(os.listdir(class_paths[anchor_class]))
+        anchor_in = choice(os.listdir(os.path.join(class_paths, classes[anchor_class])))
+        logging.debug('Anchor_in: {}'.format(anchor_in))
+
         pos_in = anchor_in
         # Make sure you don't have the same image
         while anchor_in == pos_in:
-            pos_in = choice(os.listdir(class_paths[anchor_class]))
+            pos_in = choice(os.listdir(os.path.join(class_paths, classes[anchor_class])))
 
-        neg_in = choice(os.listdir(class_paths[other_class]))
+        neg_in = choice(os.listdir(os.path.join(class_paths, classes[other_class])))
+        logging.debug('##################')
+        logging.debug(anchor_in, pos_in, neg_in)
+
         # Now read in the images
-        anchor_in = format_example(image_path=class_paths[anchor_class], image_name=anchor_in, img_size=img_size)
-        pos_in = format_example(image_path=class_paths[anchor_class], image_name=pos_in, img_size=img_size)
-        neg_in = format_example(image_path=class_paths[other_class], image_name=neg_in, img_size=img_size)
+        anchor_in = format_example(
+            image_path=os.path.join(class_paths, classes[anchor_class]),
+            image_name=anchor_in, img_size=img_size)
+        pos_in = format_example(
+            image_path=os.path.join(class_paths, classes[anchor_class]),
+            image_name=pos_in, img_size=img_size)
+        neg_in = format_example(
+            image_path=os.path.join(class_paths, classes[other_class]),
+            image_name=neg_in, img_size=img_size)
 
         out = [anchor_class, anchor_class, other_class]
         yield ([anchor_in, pos_in, neg_in], out)

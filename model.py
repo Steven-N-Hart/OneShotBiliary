@@ -1,7 +1,10 @@
+import logging
+
 import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, LeakyReLU, Dropout, GlobalMaxPooling2D
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import multi_gpu_model
 
 from loss import triplet_loss
 
@@ -31,7 +34,9 @@ def build_embedding(shape, dimensions):
     x = GlobalMaxPooling2D()(x)
 
     out = x
-    return Model(inputs=inp, outputs=out)
+    model = Model(inputs=inp, outputs=out)
+
+    return model
 
 
 def build_network(img_size=256, out_dim=128):
@@ -52,6 +57,11 @@ def build_network(img_size=256, out_dim=128):
 
     # Define the trainable model
     model = tf.keras.Model(inputs=[anchor_in, pos_in, neg_in], outputs=y_pred)
+    try:
+        model = multi_gpu_model(model, cpu_merge=True)
+        logging.info("Training using multiple GPUs..")
+    except:
+        logging.info("Training using single GPU or CPU..")
     model.compile(optimizer=Adam(),
                   loss=triplet_loss)
 
