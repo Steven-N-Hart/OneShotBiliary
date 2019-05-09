@@ -1,15 +1,26 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
+
+import argparse
+import glob
+import logging
+import os
+
 import tensorflow as tf
 import logging, os, glob
 from model import build_network
 from preprocess import generate_inputs, get_epoch_size
 
+<<<<<<< HEAD
 import argparse
 
 #class_paths = glob.glob("train/*")
 #val_class_paths = glob.glob("val/*")
 #tf.config.gpu.set_per_process_memory_fraction(0.95)
 tf.config.gpu.set_per_process_memory_growth(True)
+=======
+class_paths = glob.glob("train/*")
+val_class_paths = glob.glob("val/*")
+>>>>>>> 999b4240503249c0befe6eccffb5f50397d7cca0
 log_dir = "logs/"
 
 num_epochs = 5
@@ -79,18 +90,18 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
                                             write_images=True)
 
 # Training the model
-model.fit_generator(generate_inputs(args.image_dir_train, img_size=256),
+model.fit_generator(generate_inputs(base_directory, img_size=256),
                     steps_per_epoch=num_examples,
                     epochs=args.num_epochs,
                     callbacks=[tbCallback],
-                    validation_data=generate_inputs(args.image_dir_validation, img_size=256),
-                    validation_steps=1000,
+                    validation_data=generate_inputs(val_class_paths, img_size=256),
+                    validation_steps=10,
                     class_weight=None,
-                    max_queue_size=5000,
+                    max_queue_size=10,
                     workers=1,
                     use_multiprocessing=False,
                     shuffle=True,
                     initial_epoch=0
                     )
 
-model.save(model_out)
+model.save(args.model_out)
