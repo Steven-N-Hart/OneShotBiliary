@@ -1,14 +1,16 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
-
+import logging, os, glob
 from model import build_network
 from preprocess import generate_inputs, get_epoch_size
 
 import argparse
 
-class_paths = ['/people/m087494/OneShotBiliary/data/positive',
-               '/people/m087494/OneShotBiliary/data/negative']
-log_dir = "/people/m087494/OneShotBiliary/logs"
+#class_paths = glob.glob("train/*")
+#val_class_paths = glob.glob("val/*")
+#tf.config.gpu.set_per_process_memory_fraction(0.95)
+tf.config.gpu.set_per_process_memory_growth(True)
+log_dir = "logs/"
 
 num_epochs = 5
 
@@ -44,7 +46,7 @@ parser.add_argument("-e", "--num_epocs",
                     help="Number of epochs to use for training",
                     default=10, type=int)
 
-parser.add_argument("-v", "--verbose",
+parser.add_argument("-V", "--verbose",
                     dest="logLevel",
                     choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                     default="INFO",
@@ -53,7 +55,9 @@ parser.add_argument("-v", "--verbose",
 args = parser.parse_args()
 
 if args.logLevel:
-    logging.basicConfig(level=getattr(logging, args.logLevel))
+    #logging.basicConfig(level=getattr(logging, args.logLevel))
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
 else:
     logging.basicConfig(level=getattr(logging, 'INFO'))
 
@@ -61,31 +65,30 @@ else:
 ###############################################################################
 # Begin actual work
 ###############################################################################
-base_directory = args.image_dir_train
 
-num_examples = get_epoch_size(base_directory, os.listdir(args.image_dir_train))
+num_examples = get_epoch_size(args.image_dir_train, os.listdir(args.image_dir_train))
 
 # Build the model
 model = build_network()
 
 # Write tensorboard callback function
 tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
-                                            histogram_freq=50,
-                                            write_graph=True,
-                                            write_grads=False,
+                                            histogram_freq=10000,
+                                            write_graph=False,
+                                            update_freq='batch',
                                             write_images=True)
 
 # Training the model
-model.fit_generator(generate_inputs(class_paths, img_size=256),
+model.fit_generator(generate_inputs(args.image_dir_train, img_size=256),
                     steps_per_epoch=num_examples,
                     epochs=args.num_epochs,
                     callbacks=[tbCallback],
-                    validation_data=args.image_dir_validation,
-                    validation_steps=None,
+                    validation_data=generate_inputs(args.image_dir_validation, img_size=256),
+                    validation_steps=1000,
                     class_weight=None,
-                    max_queue_size=10,
-                    workers=4,
-                    use_multiprocessing=True,
+                    max_queue_size=5000,
+                    workers=1,
+                    use_multiprocessing=False,
                     shuffle=True,
                     initial_epoch=0
                     )

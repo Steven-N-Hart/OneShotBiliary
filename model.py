@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, LeakyReLU, Dropout, GlobalMaxPooling2D
 from tensorflow.keras.optimizers import Adam
-
+from tensorflow.keras.utils import multi_gpu_model
 from loss import triplet_loss
 
 
@@ -22,16 +22,37 @@ def build_embedding(shape, dimensions):
     x = inp
 
     # 3 Conv + MaxPooling + Relu w/ Dropout
-    x = convolutional_layer(64, kernel_size=5)(x)
-    x = convolutional_layer(128, kernel_size=3)(x)
-    x = convolutional_layer(256, kernel_size=3)(x)
+    #x = convolutional_layer(64, kernel_size=5)(x)
+    #x = convolutional_layer(128, kernel_size=3)(x)
+    #x = convolutional_layer(256, kernel_size=3)(x)
+
+    #################################################################3
+    # Hard code serialization test
+    x = Conv2D(64, kernel_size=5, padding='same')(x)
+    x = MaxPooling2D(pool_size=2)(x)
+    x = LeakyReLU(alpha=0.3)(x)
+    x = Dropout(0.25)(x)
+
+    x = Conv2D(128, kernel_size=3, padding='same')(x)
+    x = MaxPooling2D(pool_size=2)(x)
+    x = LeakyReLU(alpha=0.3)(x)
+    x = Dropout(0.25)(x)
+
+    x = Conv2D(256, kernel_size=3, padding='same')(x)
+    x = MaxPooling2D(pool_size=2)(x)
+    x = LeakyReLU(alpha=0.3)(x)
+    x = Dropout(0.25)(x)
+    # End Hard code serialization test
+    #################################################################3
 
     # 1 Final Conv to get into 128 dim embedding
     x = Conv2D(dimensions, kernel_size=2, padding='same')(x)
     x = GlobalMaxPooling2D()(x)
 
     out = x
-    return Model(inputs=inp, outputs=out)
+    model = Model(inputs=inp, outputs=out)
+
+    return model
 
 
 def build_network(img_size=256, out_dim=128):
@@ -52,6 +73,11 @@ def build_network(img_size=256, out_dim=128):
 
     # Define the trainable model
     model = tf.keras.Model(inputs=[anchor_in, pos_in, neg_in], outputs=y_pred)
+    try:
+        model = multi_gpu_model(model, gpus=3)
+        print("Training using multiple GPUs..")
+    except:
+        print("Training using single GPU or CPU..")
     model.compile(optimizer=Adam(),
                   loss=triplet_loss)
 
