@@ -14,7 +14,8 @@ def triplet_loss(y_true, y_pred):
     loss -- real number, value of the loss
     """
     alpha = 0.2
-    anchor, positive, negative = tf.unstack(y_pred, axis=1)
+
+    anchor, positive, negative = tf.split(y_pred, num_or_size_splits=3, axis=1)
 
     # distance between the anchor and the positive
     pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)))
