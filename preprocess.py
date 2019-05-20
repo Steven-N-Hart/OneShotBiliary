@@ -16,7 +16,7 @@ def format_example(image_path=None, image_name=None, img_size=256):
     image = tf.io.read_file(os.path.join(image_path, image_name))
     image = tf.io.decode_jpeg(image)
     image = tf.cast(image, tf.float32)
-    image = (image / 255.0)
+    image = tf.image.per_image_standardization(image)
     image = tf.image.resize(image, (img_size, img_size))
     image = tf.reshape(image, (1, img_size, img_size, 3))
     return image
@@ -40,27 +40,22 @@ def generate_inputs(class_paths, img_size=256):
     Randomly return inputs ready for classification
     :param class_paths: A list of file paths where each subfolder contains images of that class
     :param img_size: an integer to use for h & w of image
-    :return: dict of inputs, targets
+    :return: array of 3 images, array of 3 labels
     """
-    logging.debug('class_paths: {}'.format(class_paths))
 
     classes = os.listdir(class_paths)
     num_classes = classes.__len__()
 
     while 1:
         anchor_class = sample(range(num_classes), 1)[0]
-        #logging.debug('anchor_class: {}'.format(anchor_class))
+
         # select an example from another class
         other_class = anchor_class
         while other_class == anchor_class:
             other_class = sample(range(num_classes), 1)[0]
 
         # Get a filename from each class path
-        #logging.debug('class_paths: {}\tanchor_class: {}\tclasses[anchor_class]: {}'.format(class_paths,
-        #                                                                                    str(anchor_class),
-        #                                                                                    classes[anchor_class]))
         anchor_in = choice(os.listdir(os.path.join(class_paths, classes[anchor_class])))
-        #logging.debug('Anchor_in: {}'.format(anchor_in))
 
         pos_in = anchor_in
         # Make sure you don't have the same image
@@ -68,8 +63,6 @@ def generate_inputs(class_paths, img_size=256):
             pos_in = choice(os.listdir(os.path.join(class_paths, classes[anchor_class])))
 
         neg_in = choice(os.listdir(os.path.join(class_paths, classes[other_class])))
-        #logging.debug('##################')
-        #logging.debug('anchor_in: {}, pos_in: {}, neg_in: {}'.format(anchor_in, pos_in, neg_in))
 
         # Now read in the images
         anchor_in = format_example(
