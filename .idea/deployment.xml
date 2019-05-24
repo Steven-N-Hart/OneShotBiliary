@@ -1,25 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="m087494@rcfgpu02:22" autoUploadExternalChanges="true">
+  <component name="PublishConfigData" autoUpload="Always" autoUploadExternalChanges="true">
     <serverData>
-      <paths name="cytomine">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/home/m087494/Desktop/OneShot" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
-      <paths name="m087494@rcfgpu02:22">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/tmp/pycharm_project_99" local="$PROJECT_DIR$" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="m087494@rcfgpu02:22 (1)">
         <serverdata>
           <mappings>
-            <mapping deploy="/tmp/pycharm_project_739" local="$PROJECT_DIR$" />
+            <mapping deploy="/people/m087494/OneShotBiliary" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

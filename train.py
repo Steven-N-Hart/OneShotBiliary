@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import tensorflow as tf
-import logging, os, glob
-from model import build_network
-from preprocess import generate_inputs, get_epoch_size
+import logging
+from new_model import build_network
 
+from get_files import GetFiles, format_example
 import argparse
 
 #class_paths = glob.glob("train/*")
@@ -46,6 +46,17 @@ parser.add_argument("-e", "--num_epocs",
                     help="Number of epochs to use for training",
                     default=10, type=int)
 
+
+parser.add_argument("-b", "--batch-size",
+                    dest='BATCH_SIZE',
+                    help="Number of batches to use for training",
+                    default=1, type=int)
+
+parser.add_argument("-w", "--num-workers",
+                    dest='NUM_WORKERS',
+                    help="Number of workers to use for training",
+                    default=10, type=int)
+
 parser.add_argument("-V", "--verbose",
                     dest="logLevel",
                     choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
@@ -66,33 +77,55 @@ else:
 # Begin actual work
 ###############################################################################
 
-num_examples = get_epoch_size(args.image_dir_train, os.listdir(args.image_dir_train))
+BATCH_SIZE = args.BATCH_SIZE
+NUM_WORKERS = args.NUM_WORKERS
+
+file_list = GetFiles('data/train')
+
+
 
 # Build the model
 model = build_network()
+print('Model complete')
+
+# Prepare training dataset
+#ds_t = tf.data.Dataset.from_tensor_slices((file_list.get_triplets()))
+ds_a = tf.data.Dataset.from_tensor_slices(file_list.class_files['anchor'])
+ds_p = tf.data.Dataset.from_tensor_slices(file_list.class_files['positive'])
+ds_n = tf.data.Dataset.from_tensor_slices(file_list.class_files['negative'])
+
+
+def generator():
+    for s1, s2, s3 in zip(ds_a, ds_p, ds_n):
+        yield {"anchor": format_example(s1), "pos_img": format_example(s2), "neg_img": format_example(s3)}, [1, 1, 0]
+
+dataset = tf.data.Dataset.from_generator(generator, output_types=({"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
+dataset = dataset.batch(args.BATCH_SIZE)
+
 
 # Write tensorboard callback function
 tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
-                                            histogram_freq=10000,
+                                            histogram_freq=1000,
                                             write_graph=False,
                                             update_freq='batch',
                                             write_images=True)
 
 cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath='mymodel_{epoch}.h5',
                                    save_best_only=True)
+
 # Training the model
-model.fit_generator(generate_inputs(args.image_dir_train, img_size=256),
-                    steps_per_epoch=num_examples,
+model.fit(dataset,
+                    steps_per_epoch=file_list.num_images,
                     epochs=args.num_epochs,
                     callbacks=[tbCallback, cpCallback],
-                    validation_data=generate_inputs(args.image_dir_validation, img_size=256),
-                    validation_steps=1000,
+                    validation_data=None,
+                    validation_steps=None,
                     class_weight=None,
-                    max_queue_size=5000,
-                    workers=1,
-                    use_multiprocessing=False,
-                    shuffle=True,
+                    max_queue_size=file_list.num_images,
+                    workers=NUM_WORKERS,
+                    use_multiprocessing=True,
+                    shuffle=False,
                     initial_epoch=0
                     )
 
-model.save(model_out)
+model.save(args.model_out)
