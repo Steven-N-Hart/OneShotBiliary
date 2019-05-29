@@ -100,7 +100,7 @@ def generator():
         yield {"anchor": format_example(s1), "pos_img": format_example(s2), "neg_img": format_example(s3)}, [1, 1, 0]
 
 dataset = tf.data.Dataset.from_generator(generator, output_types=({"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
-dataset = dataset.batch(args.BATCH_SIZE)
+dataset = dataset.batch(args.BATCH_SIZE).repeat()
 
 
 # Write tensorboard callback function
