@@ -4,7 +4,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, LeakyReLU, Dropout, Gl
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import multi_gpu_model
 
-from loss import lossless_triplet_loss as triplet_loss
+from loss import triplet_loss as triplet_loss
 
 
 def build_network(img_size=256, out_dim=128):

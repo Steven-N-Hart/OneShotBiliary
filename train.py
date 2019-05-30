@@ -75,7 +75,6 @@ NUM_WORKERS = args.NUM_WORKERS
 
 # Build the model
 model = build_network()
-logging.INFO('Model complete')
 
 
 def generator():
@@ -96,7 +95,7 @@ ds_n = tf.data.Dataset.from_tensor_slices(file_list.class_files['negative'])
 
 train_dataset = tf.data.Dataset.from_generator(generator, output_types=(
     {"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
-train_dataset = dataset.batch(args.BATCH_SIZE).repeat()
+train_dataset = train_dataset.batch(args.BATCH_SIZE).repeat()
 
 # Prepare validation dataset
 if args.image_dir_validation is None:
@@ -110,7 +109,7 @@ else:
 
     val_dataset = tf.data.Dataset.from_generator(vgenerator, output_types=(
         {"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
-    val_dataset = dataset.batch(args.BATCH_SIZE).repeat()
+    val_dataset = val_dataset.batch(args.BATCH_SIZE).repeat()
     validation_steps = 1000
 
 # Write tensorboard callback function
