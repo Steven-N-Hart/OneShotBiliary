@@ -37,6 +37,11 @@ parser.add_argument("-l", "--log_dir",
                     default='log_dir',
                     help="Place to store the tensorboard logs")
 
+parser.add_argument("-L", "--learning-rate",
+                    dest='lr',
+                    help="Learning rate",
+                    default=0.000001, type=float)
+
 parser.add_argument("-e", "--num_epocs",
                     dest='num_epochs',
                     help="Number of epochs to use for training",
@@ -74,7 +79,7 @@ BATCH_SIZE = args.BATCH_SIZE
 NUM_WORKERS = args.NUM_WORKERS
 
 # Build the model
-model = build_network()
+model = build_network(lr=args.lr)
 
 
 def generator():
@@ -113,8 +118,8 @@ else:
     validation_steps = 1000
 
 # Write tensorboard callback function
-tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
-                                            histogram_freq=1000,
+tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir + '_' + str(args.lr),
+                                            histogram_freq=10000,
                                             write_graph=False,
                                             update_freq='batch',
                                             write_images=True)
@@ -122,11 +127,13 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
 cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath='mymodel_{epoch}.h5',
                                                 save_best_only=True)
 
+esCallback = tf.keras.callbacks.EarlyStopping(monitor='batch_loss', patience=3)
+
 # Training the model
 model.fit(train_dataset,
           steps_per_epoch=file_list.num_images / args.BATCH_SIZE,
           epochs=args.num_epochs,
-          callbacks=[tbCallback, cpCallback],
+          callbacks=[tbCallback, cpCallback, esCallback],
           validation_data=val_dataset,
           validation_steps=1000,
           class_weight=None,

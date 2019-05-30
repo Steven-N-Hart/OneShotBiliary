@@ -4,10 +4,10 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, LeakyReLU, Dropout, Gl
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import multi_gpu_model
 
-from loss import triplet_loss as triplet_loss
+from loss import lossless_triplet_loss as triplet_loss
 
 
-def build_network(img_size=256, out_dim=128):
+def build_network(img_size=256, out_dim=128, lr=0.000001):
     in_dims = [img_size, img_size, 3]
     initial_input = Input(shape=in_dims)
     # ################################################################3
@@ -57,7 +57,7 @@ def build_network(img_size=256, out_dim=128):
         print("Training using multiple GPUs..")
     except:
         print("Training using single GPU or CPU..")
-    model.compile(optimizer=Adam(),
+    model.compile(optimizer=Adam(lr=lr),
                   loss=triplet_loss)
 
     return model
