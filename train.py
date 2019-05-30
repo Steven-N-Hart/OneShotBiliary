@@ -1,18 +1,14 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-import tensorflow as tf
-import logging
-from new_model import build_network
 
-from get_files import GetFiles, format_example
 import argparse
+import logging
 
-#class_paths = glob.glob("train/*")
-#val_class_paths = glob.glob("val/*")
-#tf.config.gpu.set_per_process_memory_fraction(0.95)
+import tensorflow as tf
+
+from model import build_network
+from preprocess import GetFiles, format_example
+
 tf.config.gpu.set_per_process_memory_growth(True)
-log_dir = "logs/"
-
-num_epochs = 5
 
 ###############################################################################
 # Input Arguments
@@ -46,7 +42,6 @@ parser.add_argument("-e", "--num_epocs",
                     help="Number of epochs to use for training",
                     default=10, type=int)
 
-
 parser.add_argument("-b", "--batch-size",
                     dest='BATCH_SIZE',
                     help="Number of batches to use for training",
@@ -66,12 +61,10 @@ parser.add_argument("-V", "--verbose",
 args = parser.parse_args()
 
 if args.logLevel:
-    #logging.basicConfig(level=getattr(logging, args.logLevel))
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
 else:
     logging.basicConfig(level=getattr(logging, 'INFO'))
-
 
 ###############################################################################
 # Begin actual work
@@ -80,28 +73,45 @@ else:
 BATCH_SIZE = args.BATCH_SIZE
 NUM_WORKERS = args.NUM_WORKERS
 
-file_list = GetFiles('data/train')
-
-
-
 # Build the model
 model = build_network()
-print('Model complete')
-
-# Prepare training dataset
-#ds_t = tf.data.Dataset.from_tensor_slices((file_list.get_triplets()))
-ds_a = tf.data.Dataset.from_tensor_slices(file_list.class_files['anchor'])
-ds_p = tf.data.Dataset.from_tensor_slices(file_list.class_files['positive'])
-ds_n = tf.data.Dataset.from_tensor_slices(file_list.class_files['negative'])
+logging.INFO('Model complete')
 
 
 def generator():
     for s1, s2, s3 in zip(ds_a, ds_p, ds_n):
-        yield {"anchor": format_example(s1), "pos_img": format_example(s2), "neg_img": format_example(s3)}, [1, 1, 0]
+        yield {"anchor": format_example(s1, img_size=args.patch_size), "pos_img": format_example(s2, img_size=args.patch_size), "neg_img": format_example(s3, img_size=args.patch_size)}, [1, 1, 0]
 
-dataset = tf.data.Dataset.from_generator(generator, output_types=({"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
-dataset = dataset.batch(args.BATCH_SIZE).repeat()
 
+def vgenerator():
+    for s1, s2, s3 in zip(vds_a, vds_p, vds_n):
+        yield {"anchor": format_example(s1, img_size=args.patch_size), "pos_img": format_example(s2, img_size=args.patch_size), "neg_img": format_example(s3, img_size=args.patch_size)}, [1, 1, 0]
+
+
+# Prepare training dataset
+file_list = GetFiles(args.image_dir_train)
+ds_a = tf.data.Dataset.from_tensor_slices(file_list.class_files['anchor'])
+ds_p = tf.data.Dataset.from_tensor_slices(file_list.class_files['positive'])
+ds_n = tf.data.Dataset.from_tensor_slices(file_list.class_files['negative'])
+
+train_dataset = tf.data.Dataset.from_generator(generator, output_types=(
+    {"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
+train_dataset = dataset.batch(args.BATCH_SIZE).repeat()
+
+# Prepare validation dataset
+if args.image_dir_validation is None:
+    val_dataset = None
+    validation_steps = None
+else:
+    val_list = GetFiles(args.image_dir_validation)
+    vds_a = tf.data.Dataset.from_tensor_slices(val_list.class_files['anchor'])
+    vds_p = tf.data.Dataset.from_tensor_slices(val_list.class_files['positive'])
+    vds_n = tf.data.Dataset.from_tensor_slices(val_list.class_files['negative'])
+
+    val_dataset = tf.data.Dataset.from_generator(vgenerator, output_types=(
+        {"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
+    val_dataset = dataset.batch(args.BATCH_SIZE).repeat()
+    validation_steps = 1000
 
 # Write tensorboard callback function
 tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
@@ -111,21 +121,21 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir,
                                             write_images=True)
 
 cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath='mymodel_{epoch}.h5',
-                                   save_best_only=True)
+                                                save_best_only=True)
 
 # Training the model
-model.fit(dataset,
-                    steps_per_epoch=file_list.num_images,
-                    epochs=args.num_epochs,
-                    callbacks=[tbCallback, cpCallback],
-                    validation_data=None,
-                    validation_steps=None,
-                    class_weight=None,
-                    max_queue_size=file_list.num_images,
-                    workers=NUM_WORKERS,
-                    use_multiprocessing=True,
-                    shuffle=False,
-                    initial_epoch=0
-                    )
+model.fit(train_dataset,
+          steps_per_epoch=file_list.num_images / args.BATCH_SIZE,
+          epochs=args.num_epochs,
+          callbacks=[tbCallback, cpCallback],
+          validation_data=val_dataset,
+          validation_steps=1000,
+          class_weight=None,
+          max_queue_size=file_list.num_images,
+          workers=NUM_WORKERS,
+          use_multiprocessing=False,
+          shuffle=True,
+          initial_epoch=0
+          )
 
 model.save(args.model_out)

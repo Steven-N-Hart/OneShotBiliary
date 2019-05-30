@@ -31,7 +31,7 @@ def triplet_loss(y_true, y_pred):
     return loss
 
 
-def lossless_triplet_loss(y_true, y_pred, N=3, beta=3, epsilon=1e-8):
+def lossless_triplet_loss(y_true, y_pred, n=3, beta=3, epsilon=1e-8):
     """
     Implementation of the triplet loss function
 
@@ -59,8 +59,8 @@ def lossless_triplet_loss(y_true, y_pred, N=3, beta=3, epsilon=1e-8):
     # Non Linear Values
 
     # -ln(-x/N+1)
-    pos_dist = -tf.math.log(-tf.divide((pos_dist), beta) + 1 + epsilon)
-    neg_dist = -tf.math.log(-tf.divide((N - neg_dist), beta) + 1 + epsilon)
+    pos_dist = -tf.math.log(-tf.divide(pos_dist, beta) + 1 + epsilon)
+    neg_dist = -tf.math.log(-tf.divide((n - neg_dist), beta) + 1 + epsilon)
 
     # compute loss
     loss = neg_dist + pos_dist

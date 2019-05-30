@@ -1,79 +1,55 @@
-import os
-from random import sample, choice
-import logging
-
+from random import shuffle
 import tensorflow as tf
+import os
 
 
-def format_example(image_path=None, image_name=None, img_size=256):
+class GetFiles:
+
+    def __init__(self, directory_path):
+        """
+        Return a randomized list of each directory's contents
+
+        :param directory_path: a directory that contains sub-folders of images
+
+        :returns class_files: a dict of each file in each folder
+        """
+        super().__init__()
+        self.directory_path = directory_path
+        self.class_files = self.__get_list()
+        self.num_images = self.class_files['anchor'].__sizeof__()
+
+    def __get_list(self):
+        class_files = dict()
+        classes = os.listdir(self.directory_path)
+
+        for x in classes:
+            class_files[x] = []
+            for y in os.listdir(os.path.join(self.directory_path, x)):
+                class_files[x].append(os.path.join(self.directory_path, x, y))
+
+            i = class_files[x]
+            shuffle(i)
+            class_files[x] = i
+
+            if x == 'positive':
+                j = i.copy()
+                shuffle(j)
+                class_files['anchor'] = j
+
+        return class_files
+
+
+def format_example(image_name=None, img_size=256):
     """
     Apply any image preprocessing here
-    :param image_path: file path of image that contains all the images
     :param image_name: the specific filename of the image
     :param img_size: size that images should be reshaped to
     :return:
     """
-    image = tf.io.read_file(os.path.join(image_path, image_name))
+    image = tf.io.read_file(image_name)
     image = tf.io.decode_jpeg(image)
     image = tf.cast(image, tf.float32)
     image = tf.image.per_image_standardization(image)
     image = tf.image.resize(image, (img_size, img_size))
-    image = tf.reshape(image, (1, img_size, img_size, 3))
+    image = tf.reshape(image, (img_size, img_size, 3))
     return image
-
-
-def get_epoch_size(base_directory, class_paths):
-    """
-    Given an array of directories, count the number of events in each one
-    :param base_directory: root directory of images
-    :param class_paths: list of directories that contain images
-    :return: number of images
-    """
-    val = 0
-    for i in class_paths:
-        _target_dir = os.path.join(base_directory, i)
-        val += os.listdir(_target_dir).__len__()
-    return val
-
-def generate_inputs(class_paths, img_size=256):
-    """
-    Randomly return inputs ready for classification
-    :param class_paths: A list of file paths where each subfolder contains images of that class
-    :param img_size: an integer to use for h & w of image
-    :return: array of 3 images, array of 3 labels
-    """
-
-    classes = os.listdir(class_paths)
-    num_classes = classes.__len__()
-
-    while 1:
-        anchor_class = sample(range(num_classes), 1)[0]
-
-        # select an example from another class
-        other_class = anchor_class
-        while other_class == anchor_class:
-            other_class = sample(range(num_classes), 1)[0]
-
-        # Get a filename from each class path
-        anchor_in = choice(os.listdir(os.path.join(class_paths, classes[anchor_class])))
-
-        pos_in = anchor_in
-        # Make sure you don't have the same image
-        while anchor_in == pos_in:
-            pos_in = choice(os.listdir(os.path.join(class_paths, classes[anchor_class])))
-
-        neg_in = choice(os.listdir(os.path.join(class_paths, classes[other_class])))
-
-        # Now read in the images
-        anchor_in = format_example(
-            image_path=os.path.join(class_paths, classes[anchor_class]),
-            image_name=anchor_in, img_size=img_size)
-        pos_in = format_example(
-            image_path=os.path.join(class_paths, classes[anchor_class]),
-            image_name=pos_in, img_size=img_size)
-        neg_in = format_example(
-            image_path=os.path.join(class_paths, classes[other_class]),
-            image_name=neg_in, img_size=img_size)
-
-        out = [anchor_class, anchor_class, other_class]
-        yield ([anchor_in, pos_in, neg_in], out)

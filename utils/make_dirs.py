@@ -14,17 +14,16 @@ for i in sub_dirs:
     for j in os.listdir(target_dir):
         samples[i].add('_'.join(j.split('_', 3)[:-1]))
 
-
 # Split into training validation and test
-#60% - train set,
-#20% - validation set,
-#20% - test set
+# 60% - train set,
+# 20% - validation set,
+# 20% - test set
 for k in samples.keys():
     df = list(samples[k])
     train, validate, test = np.split(np.random.choice(df,
                                                       df.__len__(),
                                                       replace=False),
-                                     [int(.6*len(df)), int(.8*len(df))])
+                                     [int(.6 * len(df)), int(.8 * len(df))])
     target_dir = os.path.join(input_dir, k)
     t1 = 0
     for l in train:
