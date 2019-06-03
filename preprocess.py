@@ -31,7 +31,7 @@ class GetFiles:
             shuffle(i)
             class_files[x] = i
 
-            if x == 'positive':
+            if x == 'positive' or x == 'pos':
                 j = i.copy()
                 shuffle(j)
                 class_files['anchor'] = j
