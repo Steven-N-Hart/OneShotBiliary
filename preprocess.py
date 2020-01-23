@@ -53,3 +53,4 @@ def format_example(image_name=None, img_size=256):
     image = tf.image.resize(image, (img_size, img_size))
     image = tf.reshape(image, (img_size, img_size, 3))
     return image
+

@@ -152,3 +152,4 @@ model.fit(train_dataset,
           )
 
 model.save(os.path.join(args.log_dir + '_' + str(args.lr),'mymodel_{epoch}_Adam_' + str(args.lr) +'.h5'))
+
