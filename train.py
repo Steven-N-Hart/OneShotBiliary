@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import argparse
 import logging
-
+import os
 import tensorflow as tf
 
 from model import build_network
@@ -24,8 +24,6 @@ parser.add_argument("-v", "--image_dir_validation",
                     dest='image_dir_validation',
                     default=None,
                     help="File path ending in folders that are to be used for model validation")
-
-parser.add_argument("-o", "--model_out", dest='model_out', default='model_out', help="Output file")
 
 parser.add_argument("-p", "--patch_size",
                     dest='patch_size',
@@ -56,6 +54,11 @@ parser.add_argument("-w", "--num-workers",
                     dest='NUM_WORKERS',
                     help="Number of workers to use for training",
                     default=10, type=int)
+
+parser.add_argument("-s", "--steps-per-epoch",
+                    dest='spe',
+                    help="Limit number of examples for faster iterating",
+                    default=None, type=int)
 
 parser.add_argument("-V", "--verbose",
                     dest="logLevel",
@@ -95,8 +98,8 @@ def vgenerator():
 # Prepare training dataset
 file_list = GetFiles(args.image_dir_train)
 ds_a = tf.data.Dataset.from_tensor_slices(file_list.class_files['anchor'])
-ds_p = tf.data.Dataset.from_tensor_slices(file_list.class_files['positive'])
-ds_n = tf.data.Dataset.from_tensor_slices(file_list.class_files['negative'])
+ds_p = tf.data.Dataset.from_tensor_slices(file_list.class_files['pos'])
+ds_n = tf.data.Dataset.from_tensor_slices(file_list.class_files['neg'])
 
 train_dataset = tf.data.Dataset.from_generator(generator, output_types=(
     {"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
@@ -109,8 +112,8 @@ if args.image_dir_validation is None:
 else:
     val_list = GetFiles(args.image_dir_validation)
     vds_a = tf.data.Dataset.from_tensor_slices(val_list.class_files['anchor'])
-    vds_p = tf.data.Dataset.from_tensor_slices(val_list.class_files['positive'])
-    vds_n = tf.data.Dataset.from_tensor_slices(val_list.class_files['negative'])
+    vds_p = tf.data.Dataset.from_tensor_slices(val_list.class_files['pos'])
+    vds_n = tf.data.Dataset.from_tensor_slices(val_list.class_files['neg'])
 
     val_dataset = tf.data.Dataset.from_generator(vgenerator, output_types=(
         {"anchor": tf.float32, "pos_img": tf.float32, "neg_img": tf.float32}, tf.int64))
@@ -119,23 +122,27 @@ else:
 
 # Write tensorboard callback function
 tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir + '_' + str(args.lr),
-                                            histogram_freq=10000,
+                                            histogram_freq=0,
                                             write_graph=False,
-                                            update_freq='batch',
-                                            write_images=True)
+                                            update_freq='epoch',
+                                            write_images=False)
 
-cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath='mymodel_{epoch}.h5',
+cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(args.log_dir + '_' + str(args.lr),'mymodel_{epoch}_Adam_' + str(args.lr) +'.h5'),
                                                 save_best_only=True)
 
-esCallback = tf.keras.callbacks.EarlyStopping(monitor='batch_loss', patience=3)
+esCallback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
+
 
 # Training the model
+if args.spe is not None:
+    file_list.num_images = args.spe
+
 model.fit(train_dataset,
           steps_per_epoch=file_list.num_images / args.BATCH_SIZE,
           epochs=args.num_epochs,
           callbacks=[tbCallback, cpCallback, esCallback],
           validation_data=val_dataset,
-          validation_steps=1000,
+          validation_steps=100,
           class_weight=None,
           max_queue_size=file_list.num_images,
           workers=NUM_WORKERS,
@@ -144,4 +151,4 @@ model.fit(train_dataset,
           initial_epoch=0
           )
 
-model.save(args.model_out)
+model.save(os.path.join(args.log_dir + '_' + str(args.lr),'mymodel_{epoch}_Adam_' + str(args.lr) +'.h5'))

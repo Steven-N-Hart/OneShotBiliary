@@ -2,8 +2,7 @@ from random import shuffle
 import tensorflow as tf
 import os
 
-
-class GetFiles:
+class GetFiles():
 
     def __init__(self, directory_path):
         """
@@ -18,6 +17,7 @@ class GetFiles:
         self.class_files = self.__get_list()
         self.num_images = self.class_files['anchor'].__sizeof__()
 
+
     def __get_list(self):
         class_files = dict()
         classes = os.listdir(self.directory_path)
@@ -31,7 +31,7 @@ class GetFiles:
             shuffle(i)
             class_files[x] = i
 
-            if x == 'positive' or x == 'pos':
+            if x == 'positive':
                 j = i.copy()
                 shuffle(j)
                 class_files['anchor'] = j
@@ -39,7 +39,7 @@ class GetFiles:
         return class_files
 
 
-def format_example(image_name=None, img_size=256):
+def _format_example(image_name=None, img_size=256):
     """
     Apply any image preprocessing here
     :param image_name: the specific filename of the image
@@ -53,3 +53,5 @@ def format_example(image_name=None, img_size=256):
     image = tf.image.resize(image, (img_size, img_size))
     image = tf.reshape(image, (img_size, img_size, 3))
     return image
+
+
