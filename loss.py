@@ -56,13 +56,10 @@ def lossless_triplet_loss(y_true, y_pred, n=3, beta=3, epsilon=1e-8):
     # distance between the anchor and the negative
     neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), 1)
 
-    #print('\n\tLinear distances for pos_dist and neg_dist are {} and {}'.format(pos_dist,neg_dist ))
     # Non Linear Values
-
     # -ln(-x/N+1)
     pos_dist = -tf.math.log(-tf.divide(pos_dist, beta) + 1 + epsilon)
     neg_dist = -tf.math.log(-tf.divide((n - neg_dist), beta) + 1 + epsilon)
-    #print('\tNon-Linear distances for pos_dist and neg_dist are {} and {}\n'.format(pos_dist,neg_dist))
 
     # compute loss
     loss = neg_dist + pos_dist

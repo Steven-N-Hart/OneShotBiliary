@@ -82,17 +82,21 @@ BATCH_SIZE = args.BATCH_SIZE
 NUM_WORKERS = args.NUM_WORKERS
 
 # Build the model
-model = build_network(lr=args.lr)
+model = build_network()
 
 
 def generator():
     for s1, s2, s3 in zip(ds_a, ds_p, ds_n):
-        yield {"anchor": format_example(s1, img_size=args.patch_size), "pos_img": format_example(s2, img_size=args.patch_size), "neg_img": format_example(s3, img_size=args.patch_size)}, [1, 1, 0]
+        yield {"anchor": format_example(s1, img_size=args.patch_size),
+               "pos_img": format_example(s2, img_size=args.patch_size),
+               "neg_img": format_example(s3, img_size=args.patch_size)}, [1, 1, 0]
 
 
 def vgenerator():
     for s1, s2, s3 in zip(vds_a, vds_p, vds_n):
-        yield {"anchor": format_example(s1, img_size=args.patch_size), "pos_img": format_example(s2, img_size=args.patch_size), "neg_img": format_example(s3, img_size=args.patch_size)}, [1, 1, 0]
+        yield {"anchor": format_example(s1, img_size=args.patch_size),
+               "pos_img": format_example(s2, img_size=args.patch_size),
+               "neg_img": format_example(s3, img_size=args.patch_size)}, [1, 1, 0]
 
 
 # Prepare training dataset
@@ -127,11 +131,11 @@ tbCallback = tf.keras.callbacks.TensorBoard(log_dir=args.log_dir + '_' + str(arg
                                             update_freq='epoch',
                                             write_images=False)
 
-cpCallback = tf.keras.callbacks.ModelCheckpoint(filepath=os.path.join(args.log_dir + '_' + str(args.lr),'mymodel_{epoch}_Adam_' + str(args.lr) +'.h5'),
-                                                save_best_only=True)
+cpCallback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=os.path.join(args.log_dir + '_' + str(args.lr), 'mymodel_{epoch}_Adam_' + str(args.lr) + '.h5'),
+    save_best_only=True)
 
 esCallback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
-
 
 # Training the model
 if args.spe is not None:
@@ -151,5 +155,4 @@ model.fit(train_dataset,
           initial_epoch=0
           )
 
-model.save(os.path.join(args.log_dir + '_' + str(args.lr),'mymodel_{epoch}_Adam_' + str(args.lr) +'.h5'))
-
+model.save(os.path.join(args.log_dir + '_' + str(args.lr), 'mymodel_{epoch}_Adam_' + str(args.lr) + '.h5'))

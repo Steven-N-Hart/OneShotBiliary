@@ -27,25 +27,25 @@ for k in samples.keys():
     target_dir = os.path.join(input_dir, k)
     t1 = 0
     for l in train:
-        for m in glob(os.path.join(target_dir, l + '*jpg')):
+        for o in glob(os.path.join(target_dir, l + '*jpg')):
             t1 += 1
             print('t1 = {}\tl = {}'.format(t1, l), end="\r", flush=True)
-            os.link(m, os.path.join(out_dir, 'train', k, os.path.basename(m)))
+            os.link(o, os.path.join(out_dir, 'train', k, os.path.basename(l)))
 
     print('\nBeginning validation')
     t2 = 0
-    for l in validate:
-        for m in glob(os.path.join(target_dir, l + '*jpg')):
+    for m in validate:
+        for p in glob(os.path.join(target_dir, m + '*jpg')):
             t2 += 1
-            print('t2 = {}\tl = {}'.format(t2, l), end="\r", flush=True)
-            os.link(m, os.path.join(out_dir, 'validation', os.path.basename(m)))
+            print('t2 = {}\tl = {}'.format(t2, m), end="\r", flush=True)
+            os.link(p, os.path.join(out_dir, 'validation', os.path.basename(m)))
 
     print('\nBeginning test')
     t3 = 0
-    for l in test:
-        for m in glob(os.path.join(target_dir, l + '*jpg')):
+    for n in test:
+        for q in glob(os.path.join(target_dir, n + '*jpg')):
             t3 += 1
-            print('t3 = {}\tl = {}'.format(t3, l), end="\r", flush=True)
-            os.link(m, os.path.join(out_dir, 'test', k, os.path.basename(m)))
+            print('t3 = {}\tl = {}'.format(t3, n), end="\r", flush=True)
+            os.link(q, os.path.join(out_dir, 'test', k, os.path.basename(m)))
 
     print('\nFor {}, completed {} training, {} validation, and {} test'.format(k, t1, t2, t3))
